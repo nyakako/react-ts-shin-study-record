@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { StudyRecord } from "./domain/studyRecord";
-import fetchStudyRecords from "./utils/supabaseFunctions";
+import { fetchStudyRecords } from "./utils/supabaseFunctions";
 
 function App() {
 	const [records, setRecords] = useState<StudyRecord[]>([]);

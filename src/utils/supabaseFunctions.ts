@@ -1,7 +1,7 @@
 ﻿import { StudyRecord } from "../domain/studyRecord";
 import { supabase } from "./supabase";
 
-export default async function fetchStudyRecords() {
+export async function fetchStudyRecords() {
 	const response = await supabase.from("study-record").select("*");
 
 	if (response.error) {
