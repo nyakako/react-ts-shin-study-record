@@ -18,7 +18,6 @@ function App() {
 	useEffect(() => {
 		const getAllStudyRecords = async () => {
 			const studyRecordData = await fetchStudyRecords();
-			console.log(studyRecordData);
 			setRecords(studyRecordData);
 			setIsLoading(false);
 		};
@@ -31,7 +30,7 @@ function App() {
 				<Spinner />
 			) : (
 				<TableContainer>
-					<Table variant="striped" colorScheme="blackAlpha">
+					<Table variant="striped" colorScheme="blackAlpha" data-testid="table">
 						<Thead>
 							<Tr>
 								<Th>title</Th>
