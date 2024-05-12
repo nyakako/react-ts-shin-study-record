@@ -55,7 +55,7 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@ac8041b3b04337509168113bf98b95879df22322
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REACT_JS_STUDY_RECORD }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REACT_TS_SHIN_STUDY_RECORD }}
           projectId: react-ts-shin-study-record
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
