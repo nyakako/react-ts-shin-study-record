@@ -1,7 +1,7 @@
 function App() {
 	return (
 		<>
-			<h1>Hello World 5/12</h1>
+			<h1 data-testid="title">Hello World 5/12</h1>
 		</>
 	);
 }
