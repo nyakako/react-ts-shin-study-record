@@ -35,6 +35,9 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
   preview:
     name: Deploy
     runs-on: ubuntu-latest
