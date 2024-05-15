@@ -8,7 +8,7 @@ export async function fetchStudyRecords() {
 		throw new Error(response.error.message);
 	}
 
-	const studyRecordData = response.data.map((record) => {
+	const studyRecordData = response.data.map((record: StudyRecord) => {
 		return new StudyRecord(
 			record.id,
 			record.title,
@@ -17,4 +17,16 @@ export async function fetchStudyRecords() {
 		);
 	});
 	return studyRecordData;
+}
+
+export async function insertStudyRecord(newRecord: StudyRecord) {
+	const { data, error } = await supabase
+		.from("study-record")
+		.insert(newRecord)
+		.select();
+	return { data, error };
+}
+
+export async function deleteStudyRecord(id: string) {
+	await supabase.from("study-record").delete().eq("id", id);
 }
