@@ -2,29 +2,37 @@
 import App from "../App";
 import { StudyRecord } from "../domain/studyRecord";
 
-const mockFetchStudyRecords = jest
-	.fn()
-	.mockResolvedValue([
-		new StudyRecord("1", "title1", 1, new Date().toString()),
-		new StudyRecord("2", "title2", 2, new Date().toString()),
-		new StudyRecord("3", "title3", 3, new Date().toString()),
-		new StudyRecord("4", "title4", 4, new Date().toString()),
-	]);
-const mockFetchStudyRecords2 = jest
-	.fn()
-	.mockResolvedValue([
-		new StudyRecord("1", "title1", 1, new Date().toString()),
-		new StudyRecord("2", "title2", 2, new Date().toString()),
-		new StudyRecord("3", "title3", 3, new Date().toString()),
-		new StudyRecord("4", "title4", 4, new Date().toString()),
-		new StudyRecord("5", "title5", 5, new Date().toString()),
-	]);
+const initialRecords = [
+	new StudyRecord("1", "title1", 1, new Date().toString()),
+	new StudyRecord("2", "title2", 2, new Date().toString()),
+	new StudyRecord("3", "title3", 3, new Date().toString()),
+	new StudyRecord("4", "title4", 4, new Date().toString()),
+];
 
-const mockInsertStudyRecord = jest.fn().mockResolvedValue({
-	data: [
-		{ id: "5", title: "title5", time: 5, created_at: new Date().toString() },
-	],
-	error: null,
+const mockFetchStudyRecords = jest.fn().mockResolvedValue(initialRecords);
+
+const mockInsertStudyRecord = jest.fn().mockImplementation((newRecord) => {
+	const newRecords = [
+		...initialRecords,
+		new StudyRecord(
+			"5",
+			newRecord.title,
+			newRecord.time,
+			new Date().toString()
+		),
+	];
+	mockFetchStudyRecords.mockResolvedValueOnce(newRecords);
+	return {
+		data: [
+			{
+				id: "5",
+				title: newRecord.title,
+				time: newRecord.time,
+				created_at: new Date().toString(),
+			},
+		],
+		error: null,
+	};
 });
 
 jest.mock("../utils/supabaseFunctions.ts", () => {
@@ -43,8 +51,11 @@ describe("App", () => {
 	it("2.テーブル内のデータを確認できる", async () => {
 		render(<App />);
 		await waitFor(() => screen.getAllByTestId("table"));
-		const studyRecords = screen.getByTestId("table").querySelectorAll("tr");
-		expect(studyRecords).toHaveLength(4 + 1); //mockの4つプラスtheadのtr
+		const studyRecords = screen
+			.getByTestId("table")
+			.querySelector("tbody")
+			?.querySelectorAll("tr");
+		expect(studyRecords).toHaveLength(4); // /mockの4件
 	});
 
 	it("3.新規登録ボタンがあること", async () => {
@@ -60,11 +71,6 @@ describe("App", () => {
 	});
 
 	it("5.データを登録したら1件追加されること", async () => {
-		jest.mock("../utils/supabaseFunctions.ts", () => {
-			return {
-				fetchStudyRecords: () => mockFetchStudyRecords2(),
-			};
-		});
 		render(<App />);
 		await waitFor(() => screen.getAllByTestId("table"));
 		fireEvent.click(screen.getByTestId("addButton"));
@@ -76,10 +82,11 @@ describe("App", () => {
 		});
 		fireEvent.click(screen.getByTestId("submitButton"));
 
-		await waitFor(() =>
-			expect(mockFetchStudyRecords2).toHaveBeenCalledTimes(1)
-		);
-		const studyRecords = screen.getByTestId("table").querySelectorAll("tr");
-		expect(studyRecords).toHaveLength(5 + 1); // 新しいデータ1件と既存の4件＋theadのtr
+		await waitFor(() => expect(mockInsertStudyRecord).toHaveBeenCalledTimes(1));
+		const studyRecords = screen
+			.getByTestId("table")
+			.querySelector("tbody")
+			?.querySelectorAll("tr");
+		expect(studyRecords).toHaveLength(5); // 新しいデータ1件と既存の4件
 	});
 });
