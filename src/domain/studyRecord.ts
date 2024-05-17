@@ -1,4 +1,4 @@
-﻿import { formatDate } from "./formatDate";
+﻿import { formatDate } from "../utils/formatDate";
 
 export class StudyRecord {
 	constructor(
