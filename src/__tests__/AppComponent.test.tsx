@@ -1,9 +1,170 @@
-﻿import { render, screen } from "@testing-library/react";
+﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "../App";
+import { StudyRecord } from "../domain/studyRecord";
 
-describe("title", () => {
-	it("should render title", () => {
+const initialRecords = [
+	new StudyRecord("1", "title1", 1, new Date().toString()),
+	new StudyRecord("2", "title2", 2, new Date().toString()),
+	new StudyRecord("3", "title3", 3, new Date().toString()),
+	new StudyRecord("4", "title4", 4, new Date().toString()),
+];
+
+const mockFetchStudyRecords = jest.fn().mockResolvedValue(initialRecords);
+
+const mockInsertStudyRecord = jest
+	.fn()
+	.mockImplementation((newRecord: StudyRecord) => {
+		const newRecords = [
+			...initialRecords,
+			new StudyRecord(
+				"5",
+				newRecord.title,
+				newRecord.time,
+				new Date().toString()
+			),
+		];
+		mockFetchStudyRecords.mockResolvedValueOnce(newRecords);
+		return {
+			data: [
+				{
+					id: "5",
+					title: newRecord.title,
+					time: newRecord.time,
+					created_at: new Date().toString(),
+				},
+			],
+			error: null,
+		};
+	});
+
+const mockDeleteStudyRecord = jest.fn().mockImplementation((id: string) => {
+	const newRecords = initialRecords.filter((record) => record.id !== id);
+	mockFetchStudyRecords.mockResolvedValueOnce(newRecords);
+});
+
+jest.mock("../utils/supabaseFunctions.ts", () => {
+	return {
+		fetchStudyRecords: () => mockFetchStudyRecords(),
+		insertStudyRecord: (newRecord: StudyRecord) =>
+			mockInsertStudyRecord(newRecord),
+		deleteStudyRecord: (id: string) => mockDeleteStudyRecord(id),
+	};
+});
+
+describe("App", () => {
+	test("1.ローディング画面をみることができる", () => {
 		render(<App />);
+		expect(screen.getByTestId("spinner")).toBeInTheDocument();
+	});
+	test("2.テーブル内のデータを確認できる", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+		const studyRecords = screen
+			.getByTestId("table")
+			.querySelector("tbody")
+			?.querySelectorAll("tr");
+		expect(studyRecords).toHaveLength(4); // /mockの4件
+	});
+
+	test("3.新規登録ボタンがあること", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+		expect(screen.getByTestId("addButton")).toBeInTheDocument();
+	});
+
+	test("4.タイトルがあること", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
 		expect(screen.getByTestId("title")).toBeInTheDocument();
 	});
+
+	test("5.データを登録したらテーブルに1件追加されること", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+		fireEvent.click(screen.getByTestId("addButton"));
+		fireEvent.input(screen.getByLabelText("学習記録"), {
+			target: { value: "title5" },
+		});
+		fireEvent.input(screen.getByLabelText("学習時間"), {
+			target: { value: 5 },
+		});
+		fireEvent.click(screen.getByTestId("submitButton"));
+
+		await waitFor(() => expect(mockInsertStudyRecord).toHaveBeenCalledTimes(1));
+		const studyRecords = screen
+			.getByTestId("table")
+			.querySelector("tbody")
+			?.querySelectorAll("tr");
+		expect(studyRecords).toHaveLength(5); // 新しいデータ1件と既存の4件
+	});
+
+	test("6.モーダルが新規登録というタイトルになっている", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+		fireEvent.click(screen.getByTestId("addButton"));
+		const modalTitle = screen.getByTestId("modalTitle");
+
+		expect(modalTitle).toHaveTextContent("新規登録");
+	});
+
+	test("7.学習内容がないときに登録するとエラーがでる", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+		fireEvent.click(screen.getByTestId("addButton"));
+
+		const titleInput = screen.getByLabelText("学習記録");
+		fireEvent.change(titleInput, { target: { value: "" } });
+		fireEvent.click(screen.getByTestId("submitButton"));
+
+		const errorMessage = await screen.findByText("内容の入力は必須です");
+		expect(errorMessage).toBeInTheDocument();
+	});
+
+	test("8.学習時間が未入力、0以下のときに登録するとエラーがでる", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+		fireEvent.click(screen.getByTestId("addButton"));
+
+		const timeInput = screen.getByLabelText("学習時間");
+		fireEvent.change(timeInput, { target: { value: "" } });
+		fireEvent.click(screen.getByTestId("submitButton"));
+
+		const notInputErrorMessage = await screen.findByText(
+			"時間の入力は必須です"
+		);
+		expect(notInputErrorMessage).toBeInTheDocument();
+
+		fireEvent.change(timeInput, { target: { value: -1 } });
+		fireEvent.click(screen.getByTestId("submitButton"));
+
+		const validationErrorMessage = await screen.findByText(
+			"時間は0以上である必要があります"
+		);
+		expect(validationErrorMessage).toBeInTheDocument();
+	});
+
+	test("9.データを削除したらテーブルから1件データが減ること", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+
+		const deleteButton = screen.getAllByRole("button", { name: "削除" })[0];
+		fireEvent.click(deleteButton);
+
+		await waitFor(() => expect(mockDeleteStudyRecord).toHaveBeenCalledTimes(1));
+		await waitFor(() => screen.getAllByTestId("table"));
+		const studyRecords = screen
+			.getByTestId("table")
+			.querySelector("tbody")
+			?.querySelectorAll("tr");
+		expect(studyRecords).toHaveLength(3); // 既存の4件-1件
+	});
+
+	// test("logRoles: アクセシブルネームを確認する", async () => {
+	// 	const { container } = render(<App />);
+	// 	await waitFor(() => screen.getAllByTestId("table"));
+
+	// 	// const addButton = screen.getByTestId("addRecordButton");
+	// 	// fireEvent.click(addButton);
+	// 	logRoles(container);
+	// });
 });

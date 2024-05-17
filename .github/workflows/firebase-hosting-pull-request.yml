@@ -11,22 +11,22 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-    # env:
-    #   VITE_SUPABASE_URL: ${{secrets.SUPABASE_URL}}
-    #   VITE_SUPABASE_ANON_KEY: ${{secrets.SUPABASE_ANON_KEY}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
       - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm ci && npm run build
-
   test:
     name: Test
     runs-on: ubuntu-latest
     needs: build
-    # env:
-    #   VITE_SUPABASE_URL: ${{secrets.SUPABASE_URL}}
-    #   VITE_SUPABASE_ANON_KEY: ${{secrets.SUPABASE_ANON_KEY}}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,19 +37,25 @@ jobs:
       - name: Install
         run: npm ci
       - name: Test
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm run test
-
   preview:
     name: Deploy
     runs-on: ubuntu-latest
     needs: test
-    # env:
-    #   VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-    #   VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
       - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm ci && npm run build
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@ac8041b3b04337509168113bf98b95879df22322
