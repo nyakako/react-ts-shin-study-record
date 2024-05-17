@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: "18"
       - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm ci && npm run build
   test:
     name: Test
@@ -34,10 +37,10 @@ jobs:
       - name: Install
         run: npm ci
       - name: Test
-        run: npm run test
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: npm run test
   preview:
     name: Deploy
     runs-on: ubuntu-latest
@@ -50,6 +53,9 @@ jobs:
         with:
           node-version: "18"
       - name: Build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: npm ci && npm run build
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@ac8041b3b04337509168113bf98b95879df22322
@@ -57,7 +63,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REACT_TS_SHIN_STUDY_RECORD }}
           projectId: react-ts-shin-study-record
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           FIREBASE_CLI_EXPERIMENTS: webframeworks
