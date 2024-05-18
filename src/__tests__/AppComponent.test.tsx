@@ -27,7 +27,7 @@ const mockInsertStudyRecord = jest
 		return {
 			data: [
 				{
-					id: "5",
+					id: "1",
 					title: newRecord.title,
 					time: newRecord.time,
 					created_at: new Date().toString(),
@@ -36,6 +36,14 @@ const mockInsertStudyRecord = jest
 			error: null,
 		};
 	});
+
+const mockUpdateStudyRecord = jest.fn().mockImplementation((updatedRecord) => {
+	const updatedRecords = initialRecords.map((record) =>
+		record.id === updatedRecord.id ? updatedRecord : record
+	);
+	mockFetchStudyRecords.mockResolvedValueOnce(updatedRecords);
+	return { data: [updatedRecord], error: null };
+});
 
 const mockDeleteStudyRecord = jest.fn().mockImplementation((id: string) => {
 	const newRecords = initialRecords.filter((record) => record.id !== id);
@@ -48,6 +56,8 @@ jest.mock("../utils/supabaseFunctions.ts", () => {
 		insertStudyRecord: (newRecord: StudyRecord) =>
 			mockInsertStudyRecord(newRecord),
 		deleteStudyRecord: (id: string) => mockDeleteStudyRecord(id),
+		updateStudyRecord: (updatedRecord: StudyRecord) =>
+			mockUpdateStudyRecord(updatedRecord),
 	};
 });
 
@@ -157,6 +167,48 @@ describe("App", () => {
 			.querySelector("tbody")
 			?.querySelectorAll("tr");
 		expect(studyRecords).toHaveLength(3); // 既存の4件-1件
+	});
+	test("10.モーダルが記録編集というタイトルになっている", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+
+		const editButton = screen.getAllByRole("button", { name: "編集" })[0];
+		fireEvent.click(editButton);
+
+		const modalTitle = screen.getByTestId("modalTitle");
+		expect(modalTitle).toHaveTextContent("記録編集");
+	});
+
+	test("11.編集して登録するとデータが更新される", async () => {
+		render(<App />);
+		await waitFor(() => screen.getAllByTestId("table"));
+
+		const editButton = screen.getAllByRole("button", { name: "編集" })[0];
+		fireEvent.click(editButton);
+
+		fireEvent.input(screen.getByLabelText("学習記録"), {
+			target: { value: "edit_test" },
+		});
+		fireEvent.input(screen.getByLabelText("学習時間"), {
+			target: { value: 99 },
+		});
+		fireEvent.click(screen.getByTestId("submitButton"));
+
+		await waitFor(() => expect(mockUpdateStudyRecord).toHaveBeenCalledTimes(1));
+
+		await waitFor(() => screen.getAllByTestId("table"));
+
+		const tbody = screen.getByTestId("table").querySelector("tbody");
+		const studyRecords = tbody ? tbody.querySelectorAll("tr") : null;
+
+		if (!studyRecords) {
+			throw new Error("Table rows not found");
+		}
+
+		expect(studyRecords).toHaveLength(4);
+		const updatedRow = studyRecords[0];
+		expect(updatedRow).toHaveTextContent("edit_test");
+		expect(updatedRow).toHaveTextContent("99");
 	});
 
 	// test("logRoles: アクセシブルネームを確認する", async () => {

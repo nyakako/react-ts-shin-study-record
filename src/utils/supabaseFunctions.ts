@@ -2,7 +2,10 @@
 import { supabase } from "./supabase";
 
 export async function fetchStudyRecords() {
-	const response = await supabase.from("study-record").select("*");
+	const response = await supabase
+		.from("study-record")
+		.select("*")
+		.order("title", { ascending: true });
 
 	if (response.error) {
 		throw new Error(response.error.message);
@@ -24,6 +27,19 @@ export async function insertStudyRecord(newRecord: StudyRecord) {
 		.from("study-record")
 		.insert(newRecord)
 		.select();
+	return { data, error };
+}
+
+export async function updateStudyRecord(newRecord: StudyRecord) {
+	const { data, error } = await supabase
+		.from("study-record")
+		.update({
+			title: newRecord.title,
+			time: newRecord.time,
+		})
+		.eq("id", newRecord.id)
+		.select();
+
 	return { data, error };
 }
 

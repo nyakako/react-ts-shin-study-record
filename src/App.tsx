@@ -32,6 +32,7 @@ import {
 	deleteStudyRecord,
 	fetchStudyRecords,
 	insertStudyRecord,
+	updateStudyRecord,
 } from "./utils/supabaseFunctions";
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
 		handleSubmit,
 		register,
 		reset,
+		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm();
 	const { isOpen, onOpen, onClose } = useDisclosure();
@@ -47,8 +49,25 @@ function App() {
 	const finalRef = useRef(null);
 	const [records, setRecords] = useState<StudyRecord[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [editRecord, setEditRecord] = useState<StudyRecord | null>(null);
+
+	const onCloseModal = () => {
+		reset();
+		setEditRecord(null);
+		onClose();
+	};
+
 	const onClickAddButton = () => {
 		onOpen();
+	};
+	const onClickEditButton = (id: string) => {
+		const recordToEdit = records.find((record) => record.id === id);
+		if (recordToEdit) {
+			setEditRecord(recordToEdit);
+			setValue("title", recordToEdit.title);
+			setValue("time", recordToEdit.time);
+			onOpen();
+		}
 	};
 	const onClickDeleteRecord = async (id: string) => {
 		setIsLoading(true);
@@ -59,23 +78,27 @@ function App() {
 	};
 	const onSubmit = async (values: FieldValues) => {
 		const newStudyRecord: StudyRecord = {
-			id: values.id,
+			id: editRecord ? editRecord.id : values.id,
 			title: values.title,
 			time: values.time,
 			created_at: values.created_at,
 		};
 		setIsLoading(true);
-		await insertStudyRecord(newStudyRecord);
+
+		if (editRecord) {
+			await updateStudyRecord(newStudyRecord);
+		} else {
+			await insertStudyRecord(newStudyRecord);
+		}
 		const studyRecordData = await fetchStudyRecords();
 		setRecords(studyRecordData);
-		reset();
-		onClose();
+		// console.log(studyRecordData);
+		onCloseModal();
 		setIsLoading(false);
 	};
 	useEffect(() => {
 		const getAllStudyRecords = async () => {
 			const studyRecordData = await fetchStudyRecords();
-			console.log(studyRecordData);
 			setRecords(studyRecordData);
 			setIsLoading(false);
 		};
@@ -124,6 +147,7 @@ function App() {
 						>
 							<Thead>
 								<Tr>
+									{/* <Th>id</Th> */}
 									<Th>title</Th>
 									<Th>time</Th>
 									<Th>created_at</Th>
@@ -133,13 +157,25 @@ function App() {
 							<Tbody>
 								{records.map((record) => (
 									<Tr key={record.id}>
+										{/* <Td>{record.id}</Td> */}
 										<Td>{record.title}</Td>
 										<Td>{record.time}</Td>
 										<Td>{record.created_at}</Td>
 										<Td>
-											<button onClick={() => onClickDeleteRecord(record.id)}>
+											<Button
+												marginRight={4}
+												colorScheme="teal"
+												onClick={() => onClickEditButton(record.id)}
+											>
+												編集
+											</Button>
+
+											<Button
+												colorScheme="red"
+												onClick={() => onClickDeleteRecord(record.id)}
+											>
 												削除
-											</button>
+											</Button>
 										</Td>
 									</Tr>
 								))}
@@ -150,12 +186,14 @@ function App() {
 						initialFocusRef={initialRef}
 						finalFocusRef={finalRef}
 						isOpen={isOpen}
-						onClose={onClose}
+						onClose={onCloseModal}
 					>
 						<ModalOverlay />
 						<ModalContent>
 							<form onSubmit={handleSubmit(onSubmit)}>
-								<ModalHeader data-testid="modalTitle">新規登録</ModalHeader>
+								<ModalHeader data-testid="modalTitle">
+									{editRecord ? "記録編集" : "新規登録"}
+								</ModalHeader>
 								<ModalCloseButton />
 								<ModalBody pb={6}>
 									<FormControl isInvalid={!!errors.title}>
@@ -202,9 +240,9 @@ function App() {
 										type="submit"
 										data-testid="submitButton"
 									>
-										登録
+										{editRecord ? "更新" : "登録"}
 									</Button>
-									<Button onClick={onClose}>キャンセル</Button>
+									<Button onClick={onCloseModal}>キャンセル</Button>
 								</ModalFooter>
 							</form>
 						</ModalContent>
