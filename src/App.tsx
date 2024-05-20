@@ -15,7 +15,6 @@ import {
 	ModalFooter,
 	ModalHeader,
 	ModalOverlay,
-	Spinner,
 	Table,
 	TableContainer,
 	Tbody,
@@ -27,6 +26,8 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { FieldValues, useForm } from "react-hook-form";
+import { PrimaryButton } from "./components/atoms/PrimaryButton";
+import { LoadingSpinner } from "./components/molecules/LoadingSpinner";
 import { StudyRecord } from "./domain/studyRecord";
 import {
 	deleteStudyRecord,
@@ -105,20 +106,7 @@ function App() {
 		getAllStudyRecords();
 	}, []);
 	if (isLoading) {
-		return (
-			<Box h="80vh">
-				<Center h="100%">
-					<Spinner
-						thickness="4px"
-						emptyColor="gray.100"
-						color="orange.300"
-						speed="0.4s"
-						size="xl"
-						data-testid="spinner"
-					/>
-				</Center>
-			</Box>
-		);
+		return <LoadingSpinner />;
 	}
 
 	return (
@@ -131,13 +119,9 @@ function App() {
 				</Center>
 
 				<Box>
-					<Button
-						colorScheme="orange"
-						onClick={onClickAddButton}
-						data-testid="addButton"
-					>
-						登録
-					</Button>
+					<PrimaryButton onClick={onClickAddButton} data-testid="addButton">
+						新規登録
+					</PrimaryButton>
 					<TableContainer>
 						<Table
 							variant="striped"
@@ -233,16 +217,16 @@ function App() {
 								</ModalBody>
 
 								<ModalFooter>
-									<Button
-										colorScheme="blue"
-										mr={3}
+									<PrimaryButton
 										isLoading={isSubmitting}
 										type="submit"
 										data-testid="submitButton"
 									>
 										{editRecord ? "更新" : "登録"}
+									</PrimaryButton>
+									<Button ml={4} onClick={onCloseModal}>
+										キャンセル
 									</Button>
-									<Button onClick={onCloseModal}>キャンセル</Button>
 								</ModalFooter>
 							</form>
 						</ModalContent>
