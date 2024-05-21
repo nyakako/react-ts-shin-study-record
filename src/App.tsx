@@ -1,12 +1,14 @@
 import {
 	Box,
 	Button,
+	ButtonGroup,
 	Center,
 	Flex,
 	FormControl,
 	FormErrorMessage,
 	FormLabel,
 	Heading,
+	IconButton,
 	Input,
 	Modal,
 	ModalBody,
@@ -26,6 +28,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useRef, useState } from "react";
 import { FieldValues, useForm } from "react-hook-form";
+import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { PrimaryButton } from "./components/atoms/PrimaryButton";
 import { LoadingSpinner } from "./components/molecules/LoadingSpinner";
 import { StudyRecord } from "./domain/studyRecord";
@@ -70,7 +73,7 @@ function App() {
 			onOpen();
 		}
 	};
-	const onClickDeleteRecord = async (id: string) => {
+	const onClickDeleteButton = async (id: string) => {
 		setIsLoading(true);
 		await deleteStudyRecord(id);
 		const studyRecordData = await fetchStudyRecords();
@@ -119,9 +122,11 @@ function App() {
 				</Center>
 
 				<Box>
-					<PrimaryButton onClick={onClickAddButton} data-testid="addButton">
-						新規登録
-					</PrimaryButton>
+					<Flex justifyContent="flex-end">
+						<PrimaryButton onClick={onClickAddButton} data-testid="addButton">
+							新規登録
+						</PrimaryButton>
+					</Flex>
 					<TableContainer>
 						<Table
 							variant="striped"
@@ -143,23 +148,26 @@ function App() {
 									<Tr key={record.id}>
 										{/* <Td>{record.id}</Td> */}
 										<Td>{record.title}</Td>
-										<Td>{record.time}</Td>
+										<Td>{record.time}時間</Td>
 										<Td>{record.created_at}</Td>
 										<Td>
-											<Button
-												marginRight={4}
-												colorScheme="teal"
-												onClick={() => onClickEditButton(record.id)}
-											>
-												編集
-											</Button>
+											<ButtonGroup spacing="4">
+												<IconButton
+													aria-label="編集"
+													icon={<FiEdit />}
+													size="lg"
+													variant="outline"
+													onClick={() => onClickEditButton(record.id)}
+												/>
 
-											<Button
-												colorScheme="red"
-												onClick={() => onClickDeleteRecord(record.id)}
-											>
-												削除
-											</Button>
+												<IconButton
+													aria-label="削除"
+													icon={<FiTrash2 />}
+													size="lg"
+													variant="outline"
+													onClick={() => onClickDeleteButton(record.id)}
+												/>
+											</ButtonGroup>
 										</Td>
 									</Tr>
 								))}

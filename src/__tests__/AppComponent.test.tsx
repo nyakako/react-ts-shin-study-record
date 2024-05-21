@@ -1,4 +1,10 @@
-﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+﻿import {
+	fireEvent,
+	logRoles,
+	render,
+	screen,
+	waitFor,
+} from "@testing-library/react";
 import App from "../App";
 import { StudyRecord } from "../domain/studyRecord";
 
@@ -68,9 +74,9 @@ describe("App", () => {
 	});
 	test("2.テーブル内のデータを確認できる", async () => {
 		render(<App />);
-		await waitFor(() => screen.getAllByTestId("table"));
+		await waitFor(() => screen.getByRole("table"));
 		const studyRecords = screen
-			.getByTestId("table")
+			.getByRole("table")
 			.querySelector("tbody")
 			?.querySelectorAll("tr");
 		expect(studyRecords).toHaveLength(4); // /mockの4件
@@ -78,31 +84,37 @@ describe("App", () => {
 
 	test("3.新規登録ボタンがあること", async () => {
 		render(<App />);
-		await waitFor(() => screen.getAllByTestId("table"));
-		expect(screen.getByTestId("addButton")).toBeInTheDocument();
+		await waitFor(() => screen.getByRole("table"));
+		const addButton = screen.getByRole("button", { name: "新規登録" });
+		expect(addButton).toBeInTheDocument();
 	});
 
 	test("4.タイトルがあること", async () => {
 		render(<App />);
-		await waitFor(() => screen.getAllByTestId("table"));
-		expect(screen.getByTestId("title")).toBeInTheDocument();
+		await waitFor(() => screen.getByRole("table"));
+		const pageTitle = screen.getByRole("heading", { level: 1 });
+		expect(pageTitle).toBeInTheDocument();
 	});
 
 	test("5.データを登録したらテーブルに1件追加されること", async () => {
 		render(<App />);
-		await waitFor(() => screen.getAllByTestId("table"));
-		fireEvent.click(screen.getByTestId("addButton"));
+		await waitFor(() => screen.getByRole("table"));
+
+		const addButton = screen.getByRole("button", { name: "新規登録" });
+		fireEvent.click(addButton);
+
 		fireEvent.input(screen.getByLabelText("学習記録"), {
 			target: { value: "title5" },
 		});
 		fireEvent.input(screen.getByLabelText("学習時間"), {
 			target: { value: 5 },
 		});
-		fireEvent.click(screen.getByTestId("submitButton"));
+		const submitButton = screen.getByRole("button", { name: "登録" });
+		fireEvent.click(submitButton);
 
 		await waitFor(() => expect(mockInsertStudyRecord).toHaveBeenCalledTimes(1));
 		const studyRecords = screen
-			.getByTestId("table")
+			.getByRole("table")
 			.querySelector("tbody")
 			?.querySelectorAll("tr");
 		expect(studyRecords).toHaveLength(5); // 新しいデータ1件と既存の4件
@@ -110,8 +122,10 @@ describe("App", () => {
 
 	test("6.モーダルが新規登録というタイトルになっている", async () => {
 		render(<App />);
-		await waitFor(() => screen.getAllByTestId("table"));
-		fireEvent.click(screen.getByTestId("addButton"));
+		await waitFor(() => screen.getByRole("table"));
+
+		const addButton = screen.getByRole("button", { name: "新規登録" });
+		fireEvent.click(addButton);
 		const modalTitle = screen.getByTestId("modalTitle");
 
 		expect(modalTitle).toHaveTextContent("新規登録");
@@ -211,12 +225,14 @@ describe("App", () => {
 		expect(updatedRow).toHaveTextContent("99");
 	});
 
-	// test("logRoles: アクセシブルネームを確認する", async () => {
-	// 	const { container } = render(<App />);
-	// 	await waitFor(() => screen.getAllByTestId("table"));
+	test("logRoles: アクセシブルネームを確認する", async () => {
+		const { container } = render(<App />);
+		await waitFor(() => screen.getByRole("table"));
 
-	// 	// const addButton = screen.getByTestId("addRecordButton");
-	// 	// fireEvent.click(addButton);
-	// 	logRoles(container);
-	// });
+		const addButton = screen.getByRole("button", { name: "新規登録" });
+		fireEvent.click(addButton);
+		await waitFor(() => screen.getByRole("dialog"));
+
+		logRoles(container);
+	});
 });
