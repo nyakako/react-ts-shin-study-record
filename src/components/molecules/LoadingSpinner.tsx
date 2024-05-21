@@ -9,7 +9,7 @@ export const LoadingSpinner: FC = memo(() => {
 					<Spinner
 						thickness="4px"
 						emptyColor="gray.100"
-						color="orange.300"
+						color="green.300"
 						speed="0.4s"
 						size="xl"
 						data-testid="spinner"

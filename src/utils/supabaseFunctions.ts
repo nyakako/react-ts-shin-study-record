@@ -2,47 +2,66 @@
 import { supabase } from "./supabase";
 
 export async function fetchStudyRecords() {
-	const response = await supabase
+	return supabase
 		.from("study-record")
 		.select("*")
-		.order("title", { ascending: true });
-
-	if (response.error) {
-		throw new Error(response.error.message);
-	}
-
-	const studyRecordData = response.data.map((record: StudyRecord) => {
-		return new StudyRecord(
-			record.id,
-			record.title,
-			record.time,
-			record.created_at
-		);
-	});
-	return studyRecordData;
+		.order("title", { ascending: true })
+		.then((response) => {
+			if (response.error) {
+				throw new Error(
+					`データの取得に失敗しました: ${response.error.message}`
+				);
+			}
+			const studyRecordData = response.data.map((record: StudyRecord) => {
+				return new StudyRecord(
+					record.id,
+					record.title,
+					record.time,
+					record.created_at
+				);
+			});
+			return studyRecordData;
+		});
 }
 
 export async function insertStudyRecord(newRecord: StudyRecord) {
-	const { data, error } = await supabase
+	return supabase
 		.from("study-record")
 		.insert(newRecord)
-		.select();
-	return { data, error };
+		.select()
+		.then(({ data, error }) => {
+			if (error) {
+				throw new Error(`レコードの追加に失敗しました: ${error.message}`);
+			}
+			return data;
+		});
 }
 
 export async function updateStudyRecord(newRecord: StudyRecord) {
-	const { data, error } = await supabase
+	return supabase
 		.from("study-record")
 		.update({
 			title: newRecord.title,
 			time: newRecord.time,
 		})
 		.eq("id", newRecord.id)
-		.select();
-
-	return { data, error };
+		.select()
+		.then(({ data, error }) => {
+			if (error) {
+				throw new Error(`レコードの更新に失敗しました: ${error.message}`);
+			}
+			return data;
+		});
 }
 
 export async function deleteStudyRecord(id: string) {
-	await supabase.from("study-record").delete().eq("id", id);
+	return supabase
+		.from("study-record")
+		.delete()
+		.eq("id", id)
+		.then(({ error }) => {
+			if (error) {
+				throw new Error(`レコードの削除に失敗しました: ${error.message}`);
+			}
+		});
 }

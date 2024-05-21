@@ -1,4 +1,8 @@
 import {
+	Alert,
+	AlertDescription,
+	AlertIcon,
+	AlertTitle,
 	Box,
 	Button,
 	ButtonGroup,
@@ -26,18 +30,13 @@ import {
 	Tr,
 	useDisclosure,
 } from "@chakra-ui/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FieldValues, useForm } from "react-hook-form";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { PrimaryButton } from "./components/atoms/PrimaryButton";
 import { LoadingSpinner } from "./components/molecules/LoadingSpinner";
 import { StudyRecord } from "./domain/studyRecord";
-import {
-	deleteStudyRecord,
-	fetchStudyRecords,
-	insertStudyRecord,
-	updateStudyRecord,
-} from "./utils/supabaseFunctions";
+import { useStudyRecords } from "./hooks/useStudyRecord";
 
 function App() {
 	const {
@@ -47,67 +46,52 @@ function App() {
 		setValue,
 		formState: { errors, isSubmitting },
 	} = useForm();
-	const { isOpen, onOpen, onClose } = useDisclosure();
 
+	const { isOpen, onOpen, onClose } = useDisclosure();
+	const { records, isLoading, error, addRecord, editRecord, deleteRecord } =
+		useStudyRecords();
+	const [editRecordData, setEditRecordData] = useState<StudyRecord | null>(
+		null
+	);
 	const initialRef = useRef(null);
 	const finalRef = useRef(null);
-	const [records, setRecords] = useState<StudyRecord[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [editRecord, setEditRecord] = useState<StudyRecord | null>(null);
+
+	const handleAddClick = () => {
+		onOpen();
+	};
+
+	const handleEditClick = (record: StudyRecord) => {
+		setEditRecordData(record);
+		setValue("title", record.title);
+		setValue("time", record.time);
+		onOpen();
+	};
+
+	const handleDeleteClick = (id: string) => {
+		deleteRecord(id);
+	};
 
 	const onCloseModal = () => {
 		reset();
-		setEditRecord(null);
+		setEditRecordData(null);
 		onClose();
 	};
 
-	const onClickAddButton = () => {
-		onOpen();
-	};
-	const onClickEditButton = (id: string) => {
-		const recordToEdit = records.find((record) => record.id === id);
-		if (recordToEdit) {
-			setEditRecord(recordToEdit);
-			setValue("title", recordToEdit.title);
-			setValue("time", recordToEdit.time);
-			onOpen();
-		}
-	};
-	const onClickDeleteButton = async (id: string) => {
-		setIsLoading(true);
-		await deleteStudyRecord(id);
-		const studyRecordData = await fetchStudyRecords();
-		setRecords(studyRecordData);
-		setIsLoading(false);
-	};
-	const onSubmit = async (values: FieldValues) => {
-		const newStudyRecord: StudyRecord = {
-			id: editRecord ? editRecord.id : values.id,
+	const onClickSubmit = async (values: FieldValues) => {
+		const newRecord: StudyRecord = {
+			id: editRecordData ? editRecordData.id : values.id,
 			title: values.title,
 			time: values.time,
 			created_at: values.created_at,
 		};
-		setIsLoading(true);
-
-		if (editRecord) {
-			await updateStudyRecord(newStudyRecord);
+		if (editRecordData) {
+			await editRecord(newRecord);
 		} else {
-			await insertStudyRecord(newStudyRecord);
+			await addRecord(newRecord);
 		}
-		const studyRecordData = await fetchStudyRecords();
-		setRecords(studyRecordData);
-		// console.log(studyRecordData);
 		onCloseModal();
-		setIsLoading(false);
 	};
-	useEffect(() => {
-		const getAllStudyRecords = async () => {
-			const studyRecordData = await fetchStudyRecords();
-			setRecords(studyRecordData);
-			setIsLoading(false);
-		};
-		getAllStudyRecords();
-	}, []);
+
 	if (isLoading) {
 		return <LoadingSpinner />;
 	}
@@ -116,24 +100,23 @@ function App() {
 		<Flex align="center" justify="center">
 			<Box height="100vh">
 				<Center mt={4} mb={4}>
-					<Heading as="h1" data-testid="title">
-						Shin Study Record
-					</Heading>
+					<Heading as="h1">Shin Study Record</Heading>
 				</Center>
+
+				{error && (
+					<Alert status="error">
+						<AlertIcon />
+						<AlertTitle>error</AlertTitle>
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+				)}
 
 				<Box>
 					<Flex justifyContent="flex-end">
-						<PrimaryButton onClick={onClickAddButton} data-testid="addButton">
-							新規登録
-						</PrimaryButton>
+						<PrimaryButton onClick={handleAddClick}>新規登録</PrimaryButton>
 					</Flex>
 					<TableContainer>
-						<Table
-							variant="striped"
-							colorScheme="blackAlpha"
-							data-testid="table"
-							width="600px"
-						>
+						<Table variant="striped" colorScheme="blackAlpha" width="600px">
 							<Thead>
 								<Tr>
 									{/* <Th>id</Th> */}
@@ -157,7 +140,7 @@ function App() {
 													icon={<FiEdit />}
 													size="lg"
 													variant="outline"
-													onClick={() => onClickEditButton(record.id)}
+													onClick={() => handleEditClick(record)}
 												/>
 
 												<IconButton
@@ -165,7 +148,7 @@ function App() {
 													icon={<FiTrash2 />}
 													size="lg"
 													variant="outline"
-													onClick={() => onClickDeleteButton(record.id)}
+													onClick={() => handleDeleteClick(record.id)}
 												/>
 											</ButtonGroup>
 										</Td>
@@ -182,9 +165,9 @@ function App() {
 					>
 						<ModalOverlay />
 						<ModalContent>
-							<form onSubmit={handleSubmit(onSubmit)}>
-								<ModalHeader data-testid="modalTitle">
-									{editRecord ? "記録編集" : "新規登録"}
+							<form onSubmit={handleSubmit(onClickSubmit)}>
+								<ModalHeader>
+									{editRecordData ? "記録編集" : "新規登録"}
 								</ModalHeader>
 								<ModalCloseButton />
 								<ModalBody pb={6}>
@@ -225,12 +208,8 @@ function App() {
 								</ModalBody>
 
 								<ModalFooter>
-									<PrimaryButton
-										isLoading={isSubmitting}
-										type="submit"
-										data-testid="submitButton"
-									>
-										{editRecord ? "更新" : "登録"}
+									<PrimaryButton isLoading={isSubmitting} type="submit">
+										{editRecordData ? "更新" : "登録"}
 									</PrimaryButton>
 									<Button ml={4} onClick={onCloseModal}>
 										キャンセル
