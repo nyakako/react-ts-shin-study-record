@@ -11,7 +11,7 @@ import { useMessage } from "./useMessage";
 export const useStudyRecords = () => {
 	const [records, setRecords] = useState<StudyRecord[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [error, setError] = useState<string | undefined>(undefined);
 	const { showMessage } = useMessage();
 
 	useEffect(() => {
