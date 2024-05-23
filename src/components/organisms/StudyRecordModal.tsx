@@ -12,7 +12,7 @@
 	ModalHeader,
 	ModalOverlay,
 } from "@chakra-ui/react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { FieldValues, useForm } from "react-hook-form";
 import { StudyRecord } from "../../domain/studyRecord";
 import { PrimaryButton } from "../atoms/PrimaryButton";
@@ -30,7 +30,6 @@ export const StudyRecordModal = ({
 	onSubmit,
 	editRecordData,
 }: StudyRecordModalProps) => {
-	const initialRef = useRef<HTMLInputElement | null>(null);
 	const {
 		handleSubmit,
 		register,
@@ -39,14 +38,13 @@ export const StudyRecordModal = ({
 	} = useForm();
 
 	useEffect(() => {
-		// initialFocusと編集時のdefaultValueを同時に実現するのに必要な処理
 		if (isOpen) {
 			reset();
 		}
-	}, [isOpen, reset]);
+	}, [reset, isOpen]);
 
 	return (
-		<Modal isOpen={isOpen} onClose={onClose} initialFocusRef={initialRef}>
+		<Modal isOpen={isOpen} onClose={onClose}>
 			<ModalOverlay />
 			<ModalContent>
 				<form onSubmit={handleSubmit(onSubmit)}>
@@ -60,7 +58,6 @@ export const StudyRecordModal = ({
 								{...register("title", {
 									required: "内容の入力は必須です",
 								})}
-								ref={initialRef}
 								defaultValue={editRecordData ? editRecordData.title : ""}
 							/>
 							<FormErrorMessage>

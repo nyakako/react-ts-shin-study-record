@@ -1,5 +1,5 @@
 ﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import App from "../App";
+import StudyRecordApp from "../components/pages/StudyRecordApp";
 import { StudyRecord } from "../domain/studyRecord";
 
 const initialRecords = [
@@ -62,13 +62,13 @@ jest.mock("../utils/supabaseFunctions.ts", () => {
 	};
 });
 
-describe("App", () => {
+describe("StudyRecordApp", () => {
 	test("1.ローディング画面をみることができる", () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		expect(screen.getByTestId("spinner")).toBeInTheDocument();
 	});
 	test("2.テーブル内のデータを確認できる", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 		const studyRecords = screen
 			.getByRole("table")
@@ -78,21 +78,21 @@ describe("App", () => {
 	});
 
 	test("3.新規登録ボタンがあること", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 		const addButton = screen.getByRole("button", { name: "新規登録" });
 		expect(addButton).toBeInTheDocument();
 	});
 
 	test("4.タイトルがあること", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 		const pageTitle = screen.getByRole("heading", { level: 1 });
 		expect(pageTitle).toBeInTheDocument();
 	});
 
 	test("5.データを登録したらテーブルに1件追加されること", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 
 		const addButton = screen.getByRole("button", { name: "新規登録" });
@@ -107,7 +107,11 @@ describe("App", () => {
 		const submitButton = screen.getByRole("button", { name: "登録" });
 		fireEvent.click(submitButton);
 
-		await waitFor(() => expect(mockInsertStudyRecord).toHaveBeenCalledTimes(1));
+		await waitFor(() => {
+			expect(mockInsertStudyRecord).toHaveBeenCalledTimes(1);
+			screen.getByRole("table");
+		});
+
 		const studyRecords = screen
 			.getByRole("table")
 			.querySelector("tbody")
@@ -116,7 +120,7 @@ describe("App", () => {
 	});
 
 	test("6.モーダルが新規登録というタイトルになっている。初期表示が空欄", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 
 		const addButton = screen.getByRole("button", { name: "新規登録" });
@@ -133,7 +137,7 @@ describe("App", () => {
 	});
 
 	test("7.学習内容がないときに登録するとエラーがでる", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 		const addButton = screen.getByRole("button", { name: "新規登録" });
 		fireEvent.click(addButton);
@@ -149,7 +153,7 @@ describe("App", () => {
 	});
 
 	test("8.学習時間が未入力、0以下のときに登録するとエラーがでる", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 		const addButton = screen.getByRole("button", { name: "新規登録" });
 		fireEvent.click(addButton);
@@ -174,7 +178,7 @@ describe("App", () => {
 	});
 
 	test("9.データを削除したらテーブルから1件データが減ること", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 
 		const deleteButton = screen.getAllByRole("button", { name: "削除" })[0];
@@ -189,7 +193,7 @@ describe("App", () => {
 		expect(studyRecords).toHaveLength(3); // 既存の4件-1件
 	});
 	test("10.モーダルが記録編集というタイトルになっている", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 
 		const editButton = screen.getAllByRole("button", { name: "編集" })[0];
@@ -205,7 +209,7 @@ describe("App", () => {
 	});
 
 	test("11.編集して登録するとデータが更新される", async () => {
-		render(<App />);
+		render(<StudyRecordApp />);
 		await waitFor(() => screen.getByRole("table"));
 
 		const editButton = screen.getAllByRole("button", { name: "編集" })[0];
@@ -238,7 +242,7 @@ describe("App", () => {
 	});
 
 	// test("logRoles: アクセシブルネームを確認する", async () => {
-	// 	const { container } = render(<App />);
+	// 	const { container } = render(<StudyRecordApp />);
 	// 	await waitFor(() => screen.getByRole("table"));
 
 	// 	const addButton = screen.getByRole("button", { name: "新規登録" });
