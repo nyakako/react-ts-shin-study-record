@@ -1,6 +1,6 @@
 ﻿import { Flex, useDisclosure } from "@chakra-ui/react";
-import { RefObject, useRef, useState } from "react";
-import { FieldValues, useForm } from "react-hook-form";
+import { useState } from "react";
+import { FieldValues } from "react-hook-form";
 import { StudyRecord } from "../../domain/studyRecord";
 import { useStudyRecords } from "../../hooks/useStudyRecord";
 import { PrimaryButton } from "../atoms/PrimaryButton";
@@ -10,15 +10,7 @@ import { StudyRecordTable } from "../organisms/StudyRecordTable";
 import { MainTemplate } from "../templates/MainTemplate";
 
 function StudyRecordApp() {
-	const {
-		handleSubmit,
-		register,
-		reset,
-		setValue,
-		formState: { errors, isSubmitting },
-	} = useForm();
 	const { isOpen, onOpen, onClose } = useDisclosure();
-	const initialRef = useRef<RefObject<HTMLInputElement>>(null);
 	const { records, isLoading, error, addRecord, editRecord, deleteRecord } =
 		useStudyRecords();
 	const [editRecordData, setEditRecordData] = useState<StudyRecord | null>(
@@ -26,24 +18,17 @@ function StudyRecordApp() {
 	);
 
 	const handleAddClick = () => {
+		setEditRecordData(null);
 		onOpen();
 	};
 
 	const handleEditClick = (record: StudyRecord) => {
 		setEditRecordData(record);
-		setValue("title", record.title);
-		setValue("time", record.time);
 		onOpen();
 	};
 
 	const handleDeleteClick = (id: string) => {
 		deleteRecord(id);
-	};
-
-	const onCloseModal = () => {
-		reset();
-		setEditRecordData(null);
-		onClose();
 	};
 
 	const onClickSubmit = async (values: FieldValues) => {
@@ -58,7 +43,7 @@ function StudyRecordApp() {
 		} else {
 			await addRecord(newRecord);
 		}
-		onCloseModal();
+		onClose();
 	};
 
 	if (isLoading) {
@@ -77,13 +62,8 @@ function StudyRecordApp() {
 			/>
 			<StudyRecordModal
 				isOpen={isOpen}
-				onClose={onCloseModal}
-				handleSubmit={handleSubmit}
+				onClose={onClose}
 				onSubmit={onClickSubmit}
-				register={register}
-				errors={errors}
-				isSubmitting={isSubmitting}
-				initialRef={initialRef}
 				editRecordData={editRecordData}
 			/>
 		</MainTemplate>
